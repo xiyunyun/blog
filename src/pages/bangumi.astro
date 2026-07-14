@@ -1,0 +1,340 @@
+---
+import { Icon } from "astro-icon/components";
+import BangumiGrid from "@/components/pages/bangumi/BangumiGrid.svelte";
+import { siteConfig } from "@/config";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import type { UserSubjectCollection } from "@/types/bangumi";
+import { formatDateI18nWithTime } from "@/utils/date-utils";
+
+// 检查页面是否启用
+if (!siteConfig.pages.bangumi) {
+	return Astro.redirect("/404/");
+}
+
+// 获取构建时间
+const buildTime = formatDateI18nWithTime(new Date());
+
+// ============ 配置 ============
+const BILIBILI_UID = siteConfig.anime?.bilibili?.uid || "";
+const STEAM_API_KEY = siteConfig.bangumi?.steam?.apiKey || "";
+const STEAM_STEAMID = siteConfig.bangumi?.steam?.steamId || "";
+const STEAM_SORT_BY = siteConfig.bangumi?.steam?.sortBy || "playtime";
+
+// ============ 类型定义 ============
+interface BilibiliItem {
+	media_id: number;
+	title: string;
+	cover?: string;
+	season_type?: number;
+	rating?: { score?: number };
+	evaluate?: string;
+	brief?: string;
+	season_id: number;
+	new_ep?: { index_show?: string };
+}
+
+interface SteamGame {
+	appid: number;
+	name: string;
+	playtime_forever: number; // 分钟
+	rtime_last_played: number; // 最后游玩时间（Unix 时间戳）
+	img_icon_url?: string;
+}
+
+// ============ Bilibili 追番获取 ============
+async function fetchBilibiliData(): Promise<UserSubjectCollection[]> {
+	if (!BILIBILI_UID) {
+		console.log("[精神食粮] 未配置 Bilibili UID，跳过动画数据获取");
+		return [];
+	}
+
+	console.log(`[精神食粮] 正在获取 Bilibili 追番 (UID: ${BILIBILI_UID})...`);
+	const ps = 30;
+	const items: BilibiliItem[] = [];
+
+	try {
+		// type=1 追番 + type=2 追剧
+		for (const type of [1, 2]) {
+			const firstRes = await fetch(
+				`https://api.bilibili.com/x/space/bangumi/follow/list?type=${type}&vmid=${BILIBILI_UID}&pn=1&ps=${ps}`,
+			);
+			const firstJson = await firstRes.json();
+			if (firstJson.code !== 0 || !firstJson.data?.list?.length) continue;
+
+			items.push(...firstJson.data.list);
+			const total = firstJson.data.total || items.length;
+			const totalPages = Math.ceil(total / ps);
+
+			// 并发获取剩余页
+			if (totalPages > 1) {
+				const promises: Promise<BilibiliItem[]>[] = [];
+				for (let pn = 2; pn <= totalPages; pn++) {
+					promises.push(
+						fetch(
+							`https://api.bilibili.com/x/space/bangumi/follow/list?type=${type}&vmid=${BILIBILI_UID}&pn=${pn}&ps=${ps}`,
+						)
+							.then((r) => r.json())
+							.then((j) => j.data?.list || []),
+					);
+				}
+				const remaining = await Promise.all(promises);
+				for (const batch of remaining) {
+					items.push(...batch);
+				}
+			}
+		}
+
+		console.log(`[精神食粮] Bilibili 追番获取成功: ${items.length} 条`);
+
+		// 映射为 UserSubjectCollection
+		return items.map((item): UserSubjectCollection => ({
+			subject_id: item.media_id,
+			subject_type: 2, // 动画
+			rate: 0,
+			type: 3, // 在看
+			comment: item.new_ep?.index_show || null,
+			tags: [],
+			ep_status: 0,
+			vol_status: 0,
+			updated_at: "",
+			private: false,
+			subject: {
+				id: item.media_id,
+				type: 2,
+				name: item.title,
+				name_cn: item.title,
+				short_summary: item.evaluate || item.brief || "",
+				date: null,
+				images: {
+					large: item.cover ? item.cover.replace("http://", "https://") : "",
+					common: item.cover ? item.cover.replace("http://", "https://") : "",
+					medium: item.cover ? item.cover.replace("http://", "https://") : "",
+					small: item.cover ? item.cover.replace("http://", "https://") : "",
+					grid: item.cover ? item.cover.replace("http://", "https://") : "",
+				},
+				volumes: 0,
+				eps: 0,
+				collection_total: 0,
+				score: item.rating?.score || 0,
+				rank: 0,
+				tags: [],
+				external_url: `https://www.bilibili.com/bangumi/play/ss${item.season_id}`,
+			},
+		}));
+	} catch (e) {
+		console.error("[精神食粮] Bilibili 追番获取失败:", e);
+		return [];
+	}
+}
+
+// ============ Steam 游戏获取 ============
+async function fetchSteamData(): Promise<UserSubjectCollection[]> {
+	if (!STEAM_API_KEY || !STEAM_STEAMID) {
+		console.log("[精神食粮] 未配置 Steam API Key 或 SteamID，跳过游戏数据获取");
+		return [];
+	}
+
+	console.log(`[精神食粮] 正在获取 Steam 游戏库 (SteamID: ${STEAM_STEAMID})...`);
+
+	try {
+		const url = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_API_KEY}&steamid=${STEAM_STEAMID}&include_appinfo=1&include_played_free_games=1`;
+		const res = await fetch(url);
+		if (!res.ok) {
+			throw new Error(`HTTP ${res.status}`);
+		}
+		const json = await res.json();
+		const games: SteamGame[] = json?.response?.games || [];
+
+		console.log(
+			`[精神食粮] Steam 游戏获取成功: ${games.length} 条 (排序: ${STEAM_SORT_BY === "recent" ? "最近游玩" : "游玩时长"})`,
+		);
+
+		// 排序：按游玩时长降序 或 按最近游玩降序
+		if (STEAM_SORT_BY === "recent") {
+			games.sort((a, b) => (b.rtime_last_played || 0) - (a.rtime_last_played || 0));
+		} else {
+			games.sort((a, b) => b.playtime_forever - a.playtime_forever);
+		}
+
+		// Steam 竖屏封面 URL（600x900，2:3 比例，与卡片宽高比一致）
+		const steamPortrait = (appid: number) =>
+			`https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/library_600x900.jpg`;
+
+		// 映射为 UserSubjectCollection
+		return games.map((game): UserSubjectCollection => {
+			const playtimeHours = Math.floor(game.playtime_forever / 60);
+			// 最近游玩时间格式化
+			let commentText: string | null = null;
+			if (STEAM_SORT_BY === "recent" && game.rtime_last_played > 0) {
+				const lastPlayed = new Date(game.rtime_last_played * 1000);
+				const now = new Date();
+				const diffDays = Math.floor((now.getTime() - lastPlayed.getTime()) / (1000 * 60 * 60 * 24));
+				if (diffDays === 0) {
+					commentText = "今天玩过";
+				} else if (diffDays === 1) {
+					commentText = "昨天玩过";
+				} else if (diffDays < 30) {
+					commentText = `${diffDays} 天前玩过`;
+				} else if (diffDays < 365) {
+					commentText = `${Math.floor(diffDays / 30)} 个月前玩过`;
+				} else {
+					commentText = `${Math.floor(diffDays / 365)} 年前玩过`;
+				}
+				if (playtimeHours > 0) {
+					commentText += ` · ${playtimeHours}h`;
+				}
+			} else if (playtimeHours > 0) {
+				commentText = `游玩 ${playtimeHours} 小时`;
+			}
+
+			return {
+				subject_id: game.appid,
+				subject_type: 4, // 游戏
+				rate: 0,
+				type: game.playtime_forever > 0 ? 2 : 1, // 2=玩过, 1=想玩（未玩过）
+				comment: commentText,
+				tags: [],
+				ep_status: 0,
+				vol_status: 0,
+				updated_at: "",
+				private: false,
+				subject: {
+					id: game.appid,
+					type: 4,
+					name: game.name,
+					name_cn: game.name,
+					short_summary: "",
+					date: null,
+					images: {
+						large: steamPortrait(game.appid),
+						common: steamPortrait(game.appid),
+						medium: steamPortrait(game.appid),
+						small: steamPortrait(game.appid),
+						grid: steamPortrait(game.appid),
+					},
+					volumes: 0,
+					eps: 0,
+					collection_total: 0,
+					score: 0,
+					rank: 0,
+					tags: [],
+					external_url: `https://store.steampowered.com/app/${game.appid}`,
+				},
+			};
+		});
+	} catch (e) {
+		console.error("[精神食粮] Steam 游戏获取失败:", e);
+		return [];
+	}
+}
+
+// ============ 获取数据 ============
+const bangumiData: Record<string, UserSubjectCollection[]> = {};
+const tabs: Array<{ id: string; name: string; count: number }> = [];
+let fetchFailed = false;
+
+const isConfigured = !!(BILIBILI_UID || (STEAM_API_KEY && STEAM_STEAMID));
+
+if (!isConfigured) {
+	console.log("[精神食粮] ⚠️ 未配置 Bilibili UID 或 Steam 信息");
+} else {
+	// 获取动画数据
+	const animeData = await fetchBilibiliData();
+	if (animeData.length > 0) {
+		bangumiData.anime = animeData;
+		tabs.push({ id: "anime", name: i18n(I18nKey.bangumiCategoryAnime), count: animeData.length });
+	}
+
+	// 获取游戏数据
+	const gameData = await fetchSteamData();
+	if (gameData.length > 0) {
+		bangumiData.game = gameData;
+		tabs.push({ id: "game", name: i18n(I18nKey.bangumiCategoryGame), count: gameData.length });
+	}
+
+	// 根据 categoryOrder 排序 tabs
+	const categoryOrder = siteConfig.bangumi?.categoryOrder || ["anime", "game"];
+	tabs.sort((a, b) => {
+		const aIndex = categoryOrder.indexOf(a.id as "anime" | "game");
+		const bIndex = categoryOrder.indexOf(b.id as "anime" | "game");
+		if (aIndex === -1 && bIndex === -1) return 0;
+		if (aIndex === -1) return 1;
+		if (bIndex === -1) return -1;
+		return aIndex - bIndex;
+	});
+
+	if (tabs.length === 0 && isConfigured) {
+		fetchFailed = true;
+	}
+}
+
+const activeTab = tabs[0]?.id || "anime";
+---
+
+<MainGridLayout title={i18n(I18nKey.bangumi)} description={i18n(I18nKey.bangumiSubtitle)}>
+  <div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+    <div class="card-base z-10 px-9 py-6 relative w-full">
+        <!-- 页面标题 -->
+        <div class="relative w-full mb-8">
+            <div class="mb-6">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="h-8 w-8 rounded-lg bg-(--primary) flex items-center justify-center text-white dark:text-black/70">
+                        <Icon is:inline name="material-symbols:movie" class="text-[1.5rem]"></Icon>
+                    </div>
+                    <div class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+                        {i18n(I18nKey.bangumi)}
+                    </div>
+                </div>
+                <p class="text-base text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                    {i18n(I18nKey.bangumiSubtitle)}
+                </p>
+                <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
+                    {i18n(I18nKey.bangumiLastUpdated)} {buildTime}
+                </p>
+            </div>
+
+      {fetchFailed ? (
+        <div class="text-center py-16">
+          <div class="inline-flex items-center justify-center w-16 h-16 bg-(--btn-regular-bg) rounded-full mb-6 border border-(--line-divider)">
+            <Icon is:inline name="material-symbols:error-outline" class="text-[2rem] text-red-500" />
+          </div>
+          <h2 class="text-xl font-semibold text-black/80 dark:text-white/80 mb-3">
+            {i18n(I18nKey.bangumiFetchError)}
+          </h2>
+          <p class="text-black/60 dark:text-white/60 mb-4 max-w-md mx-auto">
+            {i18n(I18nKey.bangumiFetchErrorDesc)}
+          </p>
+        </div>
+      ) : tabs.length > 0 ? (
+        <BangumiGrid client:load tabs={tabs} initialActiveTab={activeTab} bangumiData={bangumiData} subjectBaseUrl="" />
+      ) : (
+        <div class="text-center py-16">
+          <div class="inline-flex items-center justify-center w-16 h-16 bg-(--btn-regular-bg) rounded-full mb-6 border border-(--line-divider)">
+            <Icon is:inline name="material-symbols:settings" class="text-[2rem] text-(--btn-content)" />
+          </div>
+          <h2 class="text-xl font-semibold text-black/80 dark:text-white/80 mb-3">
+            {isConfigured ? i18n(I18nKey.bangumiEmpty) : "未配置数据源"}
+          </h2>
+          <p class="text-black/60 dark:text-white/60 mb-4 max-w-md mx-auto">
+            {isConfigured
+              ? i18n(I18nKey.bangumiEmptyReason)
+              : "请在 src/config/siteConfig.ts 中配置 Bilibili UID 和 Steam API 信息"}
+          </p>
+        </div>
+      )}
+		</div>
+    </div>
+  </div>
+</MainGridLayout>
+
+<style>
+  /* 自定义样式 */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
