@@ -198,12 +198,12 @@ export const siteConfig: SiteConfig = {
 		// 可选值: "anime" | "game"（只支持动画和游戏）
 		categoryOrder: ["anime", "game"],
 		// Steam 配置（用于游戏 Tab）
-		// apiKey 和 steamId 从 .env 文件读取，不要直接写在这里
+		// apiKey 和 steamId 从环境变量读取，不要直接写在这里
 		// 本地开发：在项目根目录 .env 文件中填入 STEAM_API_KEY 和 STEAM_STEAMID
 		// GitHub 部署：在仓库 Settings > Secrets 中添加同名变量
 		steam: {
-			apiKey: import.meta.env.STEAM_API_KEY || "",
-			steamId: import.meta.env.STEAM_STEAMID || "",
+			apiKey: process.env.STEAM_API_KEY || "",
+			steamId: process.env.STEAM_STEAMID || "",
 			sortBy: "playtime", // 排序方式：playtime=按游玩时长降序，recent=按最近游玩降序
 		},
 	},

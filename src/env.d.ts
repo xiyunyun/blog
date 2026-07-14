@@ -4,8 +4,13 @@
 declare global {
 	interface ImportMetaEnv {
 		readonly MEILI_MASTER_KEY: string;
-		readonly STEAM_API_KEY: string;
-		readonly STEAM_STEAMID: string;
+	}
+
+	namespace NodeJS {
+		interface ProcessEnv {
+			STEAM_API_KEY?: string;
+			STEAM_STEAMID?: string;
+		}
 	}
 
 	interface ITOCManager {
