@@ -3,7 +3,7 @@ title: 博客简单使用指南
 published: 2026-07-14
 pinned: true
 description: "此文档中完整说明了如何使用此博客。"
-image: "./feibi.png"
+image: "./feibi.avif"
 tags: ["指南"]
 category: 博客指南
 ---

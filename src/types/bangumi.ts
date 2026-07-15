@@ -36,7 +36,7 @@ export type SlimSubject = {
 	score: number; // 评分
 	rank: number; // 排名
 	tags: SubjectTag[]; // 标签
-	external_url?: string; // 条目外部链接（Bilibili/Steam 等非 Bangumi 数据源使用）
+	external_url?: string; // 条目外部链接（Bilibili 等非 Bangumi 数据源使用）
 };
 
 // 1: 书籍，2: 动画，3: 音乐，4: 游戏，6: 三次元

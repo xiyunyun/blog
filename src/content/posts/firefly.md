@@ -5,7 +5,7 @@ pinned: true
 description: 给未来自己的一封信
 tags: [时光机]
 category: 文章示例
-image: ./images/yang1.png
+image: ./images/yang1.avif
 slug: firefly
 ---
 

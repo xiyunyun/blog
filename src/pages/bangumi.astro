@@ -18,9 +18,6 @@ const buildTime = formatDateI18nWithTime(new Date());
 
 // ============ 配置 ============
 const BILIBILI_UID = siteConfig.anime?.bilibili?.uid || "";
-const STEAM_API_KEY = siteConfig.bangumi?.steam?.apiKey || "";
-const STEAM_STEAMID = siteConfig.bangumi?.steam?.steamId || "";
-const STEAM_SORT_BY = siteConfig.bangumi?.steam?.sortBy || "playtime";
 
 // ============ 类型定义 ============
 interface BilibiliItem {
@@ -35,22 +32,14 @@ interface BilibiliItem {
 	new_ep?: { index_show?: string };
 }
 
-interface SteamGame {
-	appid: number;
-	name: string;
-	playtime_forever: number; // 分钟
-	rtime_last_played: number; // 最后游玩时间（Unix 时间戳）
-	img_icon_url?: string;
-}
-
 // ============ Bilibili 追番获取 ============
 async function fetchBilibiliData(): Promise<UserSubjectCollection[]> {
 	if (!BILIBILI_UID) {
-		console.log("[精神食粮] 未配置 Bilibili UID，跳过动画数据获取");
+		console.log("[异世之旅] 未配置 Bilibili UID，跳过动画数据获取");
 		return [];
 	}
 
-	console.log(`[精神食粮] 正在获取 Bilibili 追番 (UID: ${BILIBILI_UID})...`);
+	console.log(`[异世之旅] 正在获取 Bilibili 追番 (UID: ${BILIBILI_UID})...`);
 	const ps = 30;
 	const items: BilibiliItem[] = [];
 
@@ -86,7 +75,7 @@ async function fetchBilibiliData(): Promise<UserSubjectCollection[]> {
 			}
 		}
 
-		console.log(`[精神食粮] Bilibili 追番获取成功: ${items.length} 条`);
+		console.log(`[异世之旅] Bilibili 追番获取成功: ${items.length} 条`);
 
 		// 映射为 UserSubjectCollection
 		return items.map((item): UserSubjectCollection => ({
@@ -124,108 +113,7 @@ async function fetchBilibiliData(): Promise<UserSubjectCollection[]> {
 			},
 		}));
 	} catch (e) {
-		console.error("[精神食粮] Bilibili 追番获取失败:", e);
-		return [];
-	}
-}
-
-// ============ Steam 游戏获取 ============
-async function fetchSteamData(): Promise<UserSubjectCollection[]> {
-	if (!STEAM_API_KEY || !STEAM_STEAMID) {
-		console.log("[精神食粮] 未配置 Steam API Key 或 SteamID，跳过游戏数据获取");
-		return [];
-	}
-
-	console.log(`[精神食粮] 正在获取 Steam 游戏库 (SteamID: ${STEAM_STEAMID})...`);
-
-	try {
-		const url = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_API_KEY}&steamid=${STEAM_STEAMID}&include_appinfo=1&include_played_free_games=1`;
-		const res = await fetch(url);
-		if (!res.ok) {
-			throw new Error(`HTTP ${res.status}`);
-		}
-		const json = await res.json();
-		const games: SteamGame[] = json?.response?.games || [];
-
-		console.log(
-			`[精神食粮] Steam 游戏获取成功: ${games.length} 条 (排序: ${STEAM_SORT_BY === "recent" ? "最近游玩" : "游玩时长"})`,
-		);
-
-		// 排序：按游玩时长降序 或 按最近游玩降序
-		if (STEAM_SORT_BY === "recent") {
-			games.sort((a, b) => (b.rtime_last_played || 0) - (a.rtime_last_played || 0));
-		} else {
-			games.sort((a, b) => b.playtime_forever - a.playtime_forever);
-		}
-
-		// Steam 竖屏封面 URL（600x900，2:3 比例，与卡片宽高比一致）
-		const steamPortrait = (appid: number) =>
-			`https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/library_600x900.jpg`;
-
-		// 映射为 UserSubjectCollection
-		return games.map((game): UserSubjectCollection => {
-			const playtimeHours = Math.floor(game.playtime_forever / 60);
-			// 最近游玩时间格式化
-			let commentText: string | null = null;
-			if (STEAM_SORT_BY === "recent" && game.rtime_last_played > 0) {
-				const lastPlayed = new Date(game.rtime_last_played * 1000);
-				const now = new Date();
-				const diffDays = Math.floor((now.getTime() - lastPlayed.getTime()) / (1000 * 60 * 60 * 24));
-				if (diffDays === 0) {
-					commentText = "今天玩过";
-				} else if (diffDays === 1) {
-					commentText = "昨天玩过";
-				} else if (diffDays < 30) {
-					commentText = `${diffDays} 天前玩过`;
-				} else if (diffDays < 365) {
-					commentText = `${Math.floor(diffDays / 30)} 个月前玩过`;
-				} else {
-					commentText = `${Math.floor(diffDays / 365)} 年前玩过`;
-				}
-				if (playtimeHours > 0) {
-					commentText += ` · ${playtimeHours}h`;
-				}
-			} else if (playtimeHours > 0) {
-				commentText = `游玩 ${playtimeHours} 小时`;
-			}
-
-			return {
-				subject_id: game.appid,
-				subject_type: 4, // 游戏
-				rate: 0,
-				type: game.playtime_forever > 0 ? 2 : 1, // 2=玩过, 1=想玩（未玩过）
-				comment: commentText,
-				tags: [],
-				ep_status: 0,
-				vol_status: 0,
-				updated_at: "",
-				private: false,
-				subject: {
-					id: game.appid,
-					type: 4,
-					name: game.name,
-					name_cn: game.name,
-					short_summary: "",
-					date: null,
-					images: {
-						large: steamPortrait(game.appid),
-						common: steamPortrait(game.appid),
-						medium: steamPortrait(game.appid),
-						small: steamPortrait(game.appid),
-						grid: steamPortrait(game.appid),
-					},
-					volumes: 0,
-					eps: 0,
-					collection_total: 0,
-					score: 0,
-					rank: 0,
-					tags: [],
-					external_url: `https://store.steampowered.com/app/${game.appid}`,
-				},
-			};
-		});
-	} catch (e) {
-		console.error("[精神食粮] Steam 游戏获取失败:", e);
+		console.error("[异世之旅] Bilibili 追番获取失败:", e);
 		return [];
 	}
 }
@@ -235,10 +123,10 @@ const bangumiData: Record<string, UserSubjectCollection[]> = {};
 const tabs: Array<{ id: string; name: string; count: number }> = [];
 let fetchFailed = false;
 
-const isConfigured = !!(BILIBILI_UID || (STEAM_API_KEY && STEAM_STEAMID));
+const isConfigured = !!BILIBILI_UID;
 
 if (!isConfigured) {
-	console.log("[精神食粮] ⚠️ 未配置 Bilibili UID 或 Steam 信息");
+	console.log("[异世之旅] ⚠️ 未配置 Bilibili UID");
 } else {
 	// 获取动画数据
 	const animeData = await fetchBilibiliData();
@@ -246,24 +134,6 @@ if (!isConfigured) {
 		bangumiData.anime = animeData;
 		tabs.push({ id: "anime", name: i18n(I18nKey.bangumiCategoryAnime), count: animeData.length });
 	}
-
-	// 获取游戏数据
-	const gameData = await fetchSteamData();
-	if (gameData.length > 0) {
-		bangumiData.game = gameData;
-		tabs.push({ id: "game", name: i18n(I18nKey.bangumiCategoryGame), count: gameData.length });
-	}
-
-	// 根据 categoryOrder 排序 tabs
-	const categoryOrder = siteConfig.bangumi?.categoryOrder || ["anime", "game"];
-	tabs.sort((a, b) => {
-		const aIndex = categoryOrder.indexOf(a.id as "anime" | "game");
-		const bIndex = categoryOrder.indexOf(b.id as "anime" | "game");
-		if (aIndex === -1 && bIndex === -1) return 0;
-		if (aIndex === -1) return 1;
-		if (bIndex === -1) return -1;
-		return aIndex - bIndex;
-	});
 
 	if (tabs.length === 0 && isConfigured) {
 		fetchFailed = true;
@@ -320,7 +190,7 @@ const activeTab = tabs[0]?.id || "anime";
           <p class="text-black/60 dark:text-white/60 mb-4 max-w-md mx-auto">
             {isConfigured
               ? i18n(I18nKey.bangumiEmptyReason)
-              : "请在 src/config/siteConfig.ts 中配置 Bilibili UID 和 Steam API 信息"}
+              : "请在 src/config/siteConfig.ts 中配置 Bilibili UID"}
           </p>
         </div>
       )}

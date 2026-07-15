@@ -104,7 +104,7 @@ export const siteConfig: SiteConfig = {
 		sponsor: false,
 		// 留言板页面开关，需要配置评论系统
 		guestbook: false,
-		// 精神食粮页面开关（动画 + 游戏）
+		// 异世之旅页面开关
 		bangumi: true,
 		// 相册页面开关
 		gallery: true,
@@ -188,24 +188,15 @@ export const siteConfig: SiteConfig = {
 		generateOgImages: false,
 	},
 
-	// 精神食粮配置（原 bangumi，数据源已替换为 Bilibili + Steam）
+	// 异世之旅配置（原 bangumi，数据源为 Bilibili）
 	bangumi: {
 		// 数据模式：static=构建时获取，dynamic=客户端实时获取
 		// static 模式在构建时获取数据并静态渲染，部署后数据不更新
 		// dynamic 模式在浏览器中实时请求 API，始终显示最新数据
 		mode: "static",
 		// 条目类型排序，数组中的类型将按顺序优先展示
-		// 可选值: "anime" | "game"（只支持动画和游戏）
-		categoryOrder: ["anime", "game"],
-		// Steam 配置（用于游戏 Tab）
-		// apiKey 和 steamId 从环境变量读取，不要直接写在这里
-		// 本地开发：在项目根目录 .env 文件中填入 STEAM_API_KEY 和 STEAM_STEAMID
-		// GitHub 部署：在仓库 Settings > Secrets 中添加同名变量
-		steam: {
-			apiKey: process.env.STEAM_API_KEY || "",
-			steamId: process.env.STEAM_STEAMID || "",
-			sortBy: "playtime", // 排序方式：playtime=按游玩时长降序，recent=按最近游玩降序
-		},
+		// 可选值: "anime" | "game" | "book" | "music" | "real"
+		categoryOrder: ["anime"],
 	},
 
 	// 追番配置（Bilibili + TMDB）
@@ -240,7 +231,7 @@ export const siteConfig: SiteConfig = {
 		// - "avif": 仅输出 AVIF 格式（最新技术，最小体积，目前兼容性较低）
 		// - "webp": 仅输出 WebP 格式（体积适中，兼容性好）
 		// - "both": 同时输出 AVIF 和 WebP（推荐，浏览器自动选择最佳格式）
-		formats: "webp",
+		formats: "both",
 		// 图片压缩质量 (1-100)，值越低体积越小但质量越差，推荐 70-85
 		quality: 85,
 		// 为特定域名的图片添加 referrerpolicy="no-referrer" 属性

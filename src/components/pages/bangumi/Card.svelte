@@ -79,14 +79,8 @@ function handleLoad(e: Event) {
 
 function handleError(e: Event) {
 	const img = e.currentTarget as HTMLImageElement;
-	const src = img.src;
-	// Steam 竖屏封面 library_600x900.jpg 404 时，回退到通用的 header.jpg
-	if (src.includes("library_600x900")) {
-		img.src = src.replace("library_600x900.jpg", "header.jpg");
-	} else {
-		// header.jpg 也失败，隐藏图片让占位符显示
-		img.style.display = "none";
-	}
+	// 图片加载失败，隐藏图片让占位符显示
+	img.style.display = "none";
 }
 </script>
 

@@ -86,11 +86,11 @@ export const zh_CN: Translation = {
 	[Key.updatedAt]: "更新于",
 	[Key.readTime]: "阅读时长",
 	[Key.license]: "许可协议",
-	[Key.bangumi]: "精神食粮",
+	[Key.bangumi]: "异世之旅",
 
-	// 精神食粮筛选和状态文本
-	[Key.bangumiTitle]: "我的精神食粮",
-	[Key.bangumiSubtitle]: "记录我看过的动画与玩过的游戏",
+	// 异世之旅筛选和状态文本
+	[Key.bangumiTitle]: "我的异世之旅",
+	[Key.bangumiSubtitle]: "记录我的异世冒险",
 	[Key.bangumiFilterAll]: "全部",
 	[Key.bangumiFilterWatched]: "看过",
 	[Key.bangumiFilterWatching]: "在看",
@@ -127,10 +127,10 @@ export const zh_CN: Translation = {
 	[Key.bangumiEmptyReason]: "可能的原因：用户名不存在、网络连接问题或API限制",
 	[Key.bangumiFetchError]: "数据拉取失败",
 	[Key.bangumiFetchErrorDesc]:
-		"构建时从 Bilibili/Steam API 获取数据失败，请检查配置或稍后重试。",
+		"构建时从 Bilibili API 获取数据失败，请检查配置或稍后重试。",
 	[Key.bangumiUsername]: "用户名",
 	[Key.bangumiApi]: "API",
-	[Key.bangumiConfigTip]: "提示：请在配置文件中设置 Bilibili UID 和 Steam API 信息",
+	[Key.bangumiConfigTip]: "提示：请在配置文件中设置 Bilibili UID",
 	[Key.bangumiPrevPage]: "上一页",
 	[Key.bangumiNextPage]: "下一页",
 	[Key.bangumiCurrentPage]: "第",

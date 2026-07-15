@@ -6,13 +6,6 @@ declare global {
 		readonly MEILI_MASTER_KEY: string;
 	}
 
-	namespace NodeJS {
-		interface ProcessEnv {
-			STEAM_API_KEY?: string;
-			STEAM_STEAMID?: string;
-		}
-	}
-
 	interface ITOCManager {
 		init: () => void;
 		render: () => void;

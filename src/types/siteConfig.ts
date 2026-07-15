@@ -150,12 +150,6 @@ export type SiteConfig = {
 		apiUrl?: string; // API 地址（已弃用，保留兼容）
 		subjectBaseUrl?: string; // 条目详情页地址（已弃用，保留兼容）
 		categoryOrder?: ("anime" | "game" | "book" | "music" | "real")[]; // 条目类型排序顺序
-		// Steam 配置（用于游戏 Tab）
-		steam?: {
-			apiKey: string; // Steam Web API Key，在 https://steamcommunity.com/dev/apikey 申请
-			steamId: string; // SteamID64，在个人资料页查看（17位数字）
-			sortBy?: "playtime" | "recent"; // 排序方式：playtime=按游玩时长降序，recent=按最近游玩降序
-		};
 	};
 
 	// 追番配置（Bilibili + TMDB）
