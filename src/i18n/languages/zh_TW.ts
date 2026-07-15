@@ -382,6 +382,16 @@ export const zh_TW: Translation = {
 	[Key.passwordError]: "密碼錯誤，請重試。",
 	[Key.passwordProtectedRss]: "本文已加密保護，請訪問網站查看。",
 
+	// 時間膠囊
+	[Key.timeCapsuleTitle]: "時間膠囊",
+	[Key.timeCapsuleSubtitle]: "這是一封封存在時光中的信件，等待約定的時間開啟。",
+	[Key.timeCapsuleCountdown]: "距離自動解密還有",
+	[Key.timeCapsuleUnlocked]: "時間已到，正在自動解密…",
+	[Key.timeCapsuleDay]: "天",
+	[Key.timeCapsuleHour]: "時",
+	[Key.timeCapsuleMinute]: "分",
+	[Key.timeCapsuleSecond]: "秒",
+
 	// 背景影片播放器
 	[Key.videoPlay]: "播放背景影片",
 	[Key.videoPause]: "暫停背景影片",

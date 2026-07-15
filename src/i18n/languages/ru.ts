@@ -393,6 +393,16 @@ export const ru: Translation = {
 	[Key.passwordProtectedRss]:
 		"Эта статья зашифрована. Пожалуйста, посетите сайт для просмотра.",
 
+	// Капсула времени
+	[Key.timeCapsuleTitle]: "Капсула времени",
+	[Key.timeCapsuleSubtitle]: "Письмо, запечатанное во времени, ждёт назначенного часа.",
+	[Key.timeCapsuleCountdown]: "До автоматической расшифровки",
+	[Key.timeCapsuleUnlocked]: "Время пришло, расшифровка…",
+	[Key.timeCapsuleDay]: "д",
+	[Key.timeCapsuleHour]: "ч",
+	[Key.timeCapsuleMinute]: "м",
+	[Key.timeCapsuleSecond]: "с",
+
 	// Фоновый видеоплеер
 	[Key.videoPlay]: "Воспроизвести фоновое видео",
 	[Key.videoPause]: "Пауза фонового видео",

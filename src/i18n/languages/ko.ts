@@ -389,6 +389,16 @@ export const ko: Translation = {
 	[Key.passwordProtectedRss]:
 		"이 글은 암호화되어 있습니다. 웹사이트에서 확인해 주세요.",
 
+	// 타임캡슐
+	[Key.timeCapsuleTitle]: "타임캡슐",
+	[Key.timeCapsuleSubtitle]: "시간 속에 봉인된 편지, 약속된 순간에 열리기를 기다립니다.",
+	[Key.timeCapsuleCountdown]: "자동 복호화까지 남은 시간",
+	[Key.timeCapsuleUnlocked]: "시간이 되었습니다, 복호화 중…",
+	[Key.timeCapsuleDay]: "일",
+	[Key.timeCapsuleHour]: "시",
+	[Key.timeCapsuleMinute]: "분",
+	[Key.timeCapsuleSecond]: "초",
+
 	// Background video player
 	[Key.videoPlay]: "배경 영상 재생",
 	[Key.videoPause]: "배경 영상 일시정지",

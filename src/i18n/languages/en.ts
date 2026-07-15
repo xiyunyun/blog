@@ -391,6 +391,16 @@ export const en: Translation = {
 	[Key.passwordProtectedRss]:
 		"This article is encrypted. Please visit the website to view it.",
 
+	// 时间胶囊 / Time capsule
+	[Key.timeCapsuleTitle]: "Time Capsule",
+	[Key.timeCapsuleSubtitle]: "A letter sealed in time, waiting for the appointed moment to open.",
+	[Key.timeCapsuleCountdown]: "Time until auto-decryption",
+	[Key.timeCapsuleUnlocked]: "Time is up, decrypting…",
+	[Key.timeCapsuleDay]: "d",
+	[Key.timeCapsuleHour]: "h",
+	[Key.timeCapsuleMinute]: "m",
+	[Key.timeCapsuleSecond]: "s",
+
 	// Background video player
 	[Key.videoPlay]: "Play background video",
 	[Key.videoPause]: "Pause background video",

@@ -260,7 +260,13 @@ const relatedPosts = await getRelatedPosts(entry, 5);
       }
 
       {entry.data.password ? (
-        <EncryptedPost password={entry.data.password} slug={entry.id} hint={entry.data.passwordHint}>
+        <EncryptedPost
+          password={entry.data.password}
+          slug={entry.id}
+          hint={entry.data.passwordHint}
+          unlockTime={entry.data.unlockTime}
+          timeCapsuleHint={entry.data.timeCapsuleHint}
+        >
           <Markdown class="mb-6 markdown-content onload-animation">
             <Content />
           </Markdown>

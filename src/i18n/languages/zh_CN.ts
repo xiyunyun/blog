@@ -380,6 +380,16 @@ export const zh_CN: Translation = {
 	[Key.passwordError]: "密码错误，请重试。",
 	[Key.passwordProtectedRss]: "本文已加密保护，请访问网站查看。",
 
+	// 时间胶囊
+	[Key.timeCapsuleTitle]: "时间胶囊",
+	[Key.timeCapsuleSubtitle]: "这是一封封存在时光中的信件，等待约定的时间开启。",
+	[Key.timeCapsuleCountdown]: "距离自动解密还有",
+	[Key.timeCapsuleUnlocked]: "时间已到，正在自动解密…",
+	[Key.timeCapsuleDay]: "天",
+	[Key.timeCapsuleHour]: "时",
+	[Key.timeCapsuleMinute]: "分",
+	[Key.timeCapsuleSecond]: "秒",
+
 	// 背景视频播放器
 	[Key.videoPlay]: "播放背景视频",
 	[Key.videoPause]: "暂停背景视频",

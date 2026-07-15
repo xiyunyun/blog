@@ -376,6 +376,16 @@ enum I18nKey {
 	passwordError = "passwordError",
 	passwordProtectedRss = "passwordProtectedRss",
 
+	// 时间胶囊
+	timeCapsuleTitle = "timeCapsuleTitle",
+	timeCapsuleSubtitle = "timeCapsuleSubtitle",
+	timeCapsuleCountdown = "timeCapsuleCountdown",
+	timeCapsuleUnlocked = "timeCapsuleUnlocked",
+	timeCapsuleDay = "timeCapsuleDay",
+	timeCapsuleHour = "timeCapsuleHour",
+	timeCapsuleMinute = "timeCapsuleMinute",
+	timeCapsuleSecond = "timeCapsuleSecond",
+
 	// 背景视频播放器
 	videoPlay = "videoPlay",
 	videoPause = "videoPause",

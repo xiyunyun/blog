@@ -8,12 +8,31 @@ interface Props {
 	password: string;
 	slug: string;
 	hint?: string;
+	unlockTime?: string;
+	timeCapsuleHint?: string;
 }
 
-const { password, slug, hint = "" } = Astro.props;
+const {
+	password,
+	slug,
+	hint = "",
+	unlockTime = "",
+	timeCapsuleHint = "",
+} = Astro.props;
 
 const rawHtml = await Astro.slots.render("default");
 const encryptedData = encryptContent(rawHtml, password, slug);
+
+// 时间胶囊模式判定
+const hasUnlockTime = !!unlockTime;
+let unlockTimestamp: number | null = null;
+if (hasUnlockTime) {
+	const dt = new Date(unlockTime);
+	if (!Number.isNaN(dt.getTime())) {
+		unlockTimestamp = dt.getTime();
+	}
+}
+const isTimeCapsule = hasUnlockTime && unlockTimestamp !== null;
 
 const labels = {
 	protected: i18n(I18nKey.passwordProtected),
@@ -22,6 +41,14 @@ const labels = {
 	placeholder: i18n(I18nKey.passwordPlaceholder),
 	submit: i18n(I18nKey.passwordSubmit),
 	error: i18n(I18nKey.passwordError),
+	capsuleTitle: i18n(I18nKey.timeCapsuleTitle),
+	capsuleSubtitle: timeCapsuleHint || i18n(I18nKey.timeCapsuleSubtitle),
+	capsuleCountdown: i18n(I18nKey.timeCapsuleCountdown),
+	capsuleUnlocked: i18n(I18nKey.timeCapsuleUnlocked),
+	capsuleDay: i18n(I18nKey.timeCapsuleDay),
+	capsuleHour: i18n(I18nKey.timeCapsuleHour),
+	capsuleMinute: i18n(I18nKey.timeCapsuleMinute),
+	capsuleSecond: i18n(I18nKey.timeCapsuleSecond),
 };
 ---
 
@@ -29,39 +56,87 @@ const labels = {
   id="encrypted-container"
   data-encrypted={encryptedData}
   data-slug={slug}
+  data-unlock-timestamp={unlockTimestamp ?? ""}
+  data-is-time-capsule={isTimeCapsule ? "1" : "0"}
+  data-capsule-password={isTimeCapsule ? password : ""}
 >
   <!-- Lock UI -->
   <div id="password-ui" class="flex justify-center py-16 px-4">
     <div class="card-base flex flex-col items-center gap-3 max-w-100 w-full p-8">
-      <Icon is:inline name="material-symbols:shield-lock" class="text-8xl text-(--primary)" />
 
-      <h2 class="text-lg font-bold text-black/80 dark:text-white/80 m-0">{labels.protected}</h2>
-      <p class="text-sm text-black/40 dark:text-white/40 text-center m-0">{labels.desc}</p>
+      {isTimeCapsule ? (
+        <>
+          <Icon is:inline name="material-symbols:hourglass-top-rounded" class="text-8xl text-(--primary)" />
+          <h2 class="text-lg font-bold text-black/80 dark:text-white/80 m-0">{labels.capsuleTitle}</h2>
+          <p class="text-sm text-black/40 dark:text-white/40 text-center m-0">{labels.capsuleSubtitle}</p>
 
-      {hint && (
-        <p class="text-xs text-black/30 dark:text-white/30 text-center m-0">{labels.hint}: {hint}</p>
+          {/* 倒计时区域 */}
+          <div id="capsule-countdown" class="w-full mt-2">
+            <p class="text-xs text-black/40 dark:text-white/40 text-center mb-2">{labels.capsuleCountdown}</p>
+            <div class="flex justify-center gap-2 sm:gap-3">
+              <div class="flex flex-col items-center">
+                <div id="capsule-days" class="text-2xl sm:text-3xl font-bold text-(--primary) tabular-nums">--</div>
+                <div class="text-[0.65rem] text-black/40 dark:text-white/40 mt-1">{labels.capsuleDay}</div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-bold text-(--primary)/50 pt-0">:</div>
+              <div class="flex flex-col items-center">
+                <div id="capsule-hours" class="text-2xl sm:text-3xl font-bold text-(--primary) tabular-nums">--</div>
+                <div class="text-[0.65rem] text-black/40 dark:text-white/40 mt-1">{labels.capsuleHour}</div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-bold text-(--primary)/50 pt-0">:</div>
+              <div class="flex flex-col items-center">
+                <div id="capsule-minutes" class="text-2xl sm:text-3xl font-bold text-(--primary) tabular-nums">--</div>
+                <div class="text-[0.65rem] text-black/40 dark:text-white/40 mt-1">{labels.capsuleMinute}</div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-bold text-(--primary)/50 pt-0">:</div>
+              <div class="flex flex-col items-center">
+                <div id="capsule-seconds" class="text-2xl sm:text-3xl font-bold text-(--primary) tabular-nums">--</div>
+                <div class="text-[0.65rem] text-black/40 dark:text-white/40 mt-1">{labels.capsuleSecond}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* 解密中提示（到点后显示） */}
+          <p id="capsule-unlocking" class="text-xs text-(--primary) m-0 hidden">{labels.capsuleUnlocked}</p>
+        </>
+      ) : (
+        <>
+          <Icon is:inline name="material-symbols:shield-lock" class="text-8xl text-(--primary)" />
+
+          <h2 class="text-lg font-bold text-black/80 dark:text-white/80 m-0">{labels.protected}</h2>
+          <p class="text-sm text-black/40 dark:text-white/40 text-center m-0">{labels.desc}</p>
+
+          {hint && (
+            <p class="text-xs text-black/30 dark:text-white/30 text-center m-0">{labels.hint}: {hint}</p>
+          )}
+        </>
       )}
 
-      <form id="password-form" class="w-full mt-2 space-y-2">
-        <input
-          id="password-input"
-          name="password"
-          type="password"
-          placeholder={labels.placeholder}
-          autocomplete="off"
-          class="w-full px-3 py-2 rounded-lg text-sm bg-black/5 dark:bg-white/10
-                 border border-black/8 dark:border-white/8
-                 text-black/80 dark:text-white/80 placeholder-black/25 dark:placeholder-white/25
-                 outline-hidden focus:border-(--primary) transition"
-        />
-        <button
-          type="submit"
-          class="w-full py-2 rounded-lg text-sm font-medium bg-(--primary) text-white dark:text-black/70
-                 hover:opacity-85 active:scale-[0.98] transition-all"
-        >
-          {labels.submit}
-        </button>
-      </form>
+      {/* 密码输入区
+          - 普通加密：始终显示
+          - 时间胶囊：仅当配置了 password 时显示（允许提前解锁） */}
+      {(!isTimeCapsule || password) && (
+        <form id="password-form" class="w-full mt-2 space-y-2">
+          <input
+            id="password-input"
+            name="password"
+            type="password"
+            placeholder={labels.placeholder}
+            autocomplete="off"
+            class="w-full px-3 py-2 rounded-lg text-sm bg-black/5 dark:bg-white/10
+                   border border-black/8 dark:border-white/8
+                   text-black/80 dark:text-white/80 placeholder-black/25 dark:placeholder-white/25
+                   outline-hidden focus:border-(--primary) transition"
+          />
+          <button
+            type="submit"
+            class="w-full py-2 rounded-lg text-sm font-medium bg-(--primary) text-white dark:text-black/70
+                   hover:opacity-85 active:scale-[0.98] transition-all"
+          >
+            {labels.submit}
+          </button>
+        </form>
+      )}
 
       <p id="password-error" class="text-xs text-red-500 dark:text-red-400 m-0 hidden">{labels.error}</p>
     </div>
@@ -90,6 +165,11 @@ const labels = {
   var input = document.getElementById('password-input');
   var errorEl = document.getElementById('password-error');
   var contentEl = document.getElementById('decrypted-content');
+
+  var isTimeCapsule = container.getAttribute('data-is-time-capsule') === '1';
+  var unlockTsAttr = container.getAttribute('data-unlock-timestamp');
+  var unlockTs = unlockTsAttr ? Number(unlockTsAttr) : NaN;
+  var capsulePassword = container.getAttribute('data-capsule-password') || '';
 
   function showContent(html) {
     contentEl.innerHTML = html;
@@ -178,10 +258,8 @@ const labels = {
     return new TextDecoder().decode(decrypted);
   }
 
-  // Handle form submit
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    var pwd = input.value.trim();
+  // 尝试用密码解密（表单提交或缓存命中时调用）
+  function tryDecryptWithPassword(pwd) {
     if (!pwd) return;
     hideError();
     decrypt(pwd).then(function(html) {
@@ -190,7 +268,16 @@ const labels = {
     }).catch(function() {
       showError();
     });
-  });
+  }
+
+  // Handle form submit
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var pwd = input.value.trim();
+      tryDecryptWithPassword(pwd);
+    });
+  }
 
   // Try cached password
   var cached = sessionStorage.getItem(cacheKey);
@@ -200,6 +287,57 @@ const labels = {
     }).catch(function() {
       sessionStorage.removeItem(cacheKey);
     });
+  }
+
+  // ============ 时间胶囊倒计时 ============
+  if (isTimeCapsule && !Number.isNaN(unlockTs)) {
+    var daysEl = document.getElementById('capsule-days');
+    var hoursEl = document.getElementById('capsule-hours');
+    var minutesEl = document.getElementById('capsule-minutes');
+    var secondsEl = document.getElementById('capsule-seconds');
+    var countdownEl = document.getElementById('capsule-countdown');
+    var unlockingEl = document.getElementById('capsule-unlocking');
+
+    function pad(n) { return n < 10 ? '0' + n : String(n); }
+
+    function updateCountdown() {
+      var remaining = unlockTs - Date.now();
+      if (remaining <= 0) {
+        // 时间到：隐藏倒计时，显示解密中提示，自动解密
+        if (countdownEl) countdownEl.classList.add('hidden');
+        if (unlockingEl) unlockingEl.classList.remove('hidden');
+        // 自动解密：使用构建时埋入的胶囊密码
+        if (capsulePassword) {
+          decrypt(capsulePassword).then(function(html) {
+            sessionStorage.setItem(cacheKey, capsulePassword);
+            showContent(html);
+          }).catch(function() {
+            // 解密失败保持锁定 UI
+          });
+        }
+        return;
+      }
+
+      var d = Math.floor(remaining / 86400000);
+      var h = Math.floor((remaining % 86400000) / 3600000);
+      var m = Math.floor((remaining % 3600000) / 60000);
+      var s = Math.floor((remaining % 60000) / 1000);
+
+      if (daysEl) daysEl.textContent = d;
+      if (hoursEl) hoursEl.textContent = pad(h);
+      if (minutesEl) minutesEl.textContent = pad(m);
+      if (secondsEl) secondsEl.textContent = pad(s);
+    }
+
+    // 仅当内容尚未显示时才启动倒计时
+    if (contentEl.classList.contains('hidden')) {
+      updateCountdown();
+      setInterval(function() {
+        // 内容已显示则停止更新
+        if (!contentEl.classList.contains('hidden')) return;
+        updateCountdown();
+      }, 1000);
+    }
   }
 })();
 </script>

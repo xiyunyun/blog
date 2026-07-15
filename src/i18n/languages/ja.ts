@@ -390,6 +390,16 @@ export const ja: Translation = {
 	[Key.passwordProtectedRss]:
 		"この記事は暗号化されています。ウェブサイトにアクセスしてご覧ください。",
 
+	// タイムカプセル
+	[Key.timeCapsuleTitle]: "タイムカプセル",
+	[Key.timeCapsuleSubtitle]: "時の中に封じられた手紙、約束の時の開封を待っています。",
+	[Key.timeCapsuleCountdown]: "自動復号まであと",
+	[Key.timeCapsuleUnlocked]: "時間になりました、復号中…",
+	[Key.timeCapsuleDay]: "日",
+	[Key.timeCapsuleHour]: "時",
+	[Key.timeCapsuleMinute]: "分",
+	[Key.timeCapsuleSecond]: "秒",
+
 	// 背景動画プレイヤー
 	[Key.videoPlay]: "背景動画を再生",
 	[Key.videoPause]: "背景動画を一時停止",

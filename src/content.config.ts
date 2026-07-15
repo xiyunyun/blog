@@ -22,6 +22,10 @@ const postsCollection = defineCollection({
 		comment: z.boolean().optional().default(true),
 		password: z.string().optional().default(""),
 		passwordHint: z.string().optional().default(""),
+		// 时间胶囊：到 unlockTime 自动解密；未到点时显示倒计时
+		// 格式: 2025-01-01T00:00:00+08:00 (ISO 8601，必须含时区)
+		unlockTime: z.string().optional().default(""),
+		timeCapsuleHint: z.string().optional().default(""),
 
 		/* For internal use */
 		prevTitle: z.string().default(""),
