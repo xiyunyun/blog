@@ -58,7 +58,10 @@ const adapter = process.env.CF_WORKERS
 export default defineConfig({
 	site: siteConfig.site_url,
 
-	base: "/blog/",
+	// 通过环境变量 BASE_PATH 区分部署平台：
+	// - GitHub Pages: BASE_PATH=/blog/（默认）
+	// - Cloudflare Pages / Vercel / 自定义域名: BASE_PATH=/
+	base: process.env.BASE_PATH || "/blog/",
 	trailingSlash: "always",
 
 	// 字体配置 - 只加载实际使用的字体，跳过未引用的以加快构建

@@ -11,8 +11,10 @@ export const siteConfig: SiteConfig = {
 	// 站点副标题
 	subtitle: "飞吧，向着云端",
 
-	// 站点 URL
-	site_url: "https://xiyunyun.github.io",
+	// 站点 URL（可通过环境变量 SITE_URL 覆盖，用于不同部署平台）
+	// - GitHub Pages: https://xiyunyun.github.io（默认）
+	// - Cloudflare Pages: https://你的项目名.pages.dev 或自定义域名
+	site_url: process.env.SITE_URL || "https://xiyunyun.github.io",
 
 	// 站点描述
 	description:
